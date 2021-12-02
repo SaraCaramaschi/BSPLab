@@ -9,6 +9,5 @@ function check = stage1(signal, check, threshold)
     else
         check=check;
     end
-    
 end
 
