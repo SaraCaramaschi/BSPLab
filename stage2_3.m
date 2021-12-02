@@ -4,9 +4,12 @@ function result = stage2_3(signal, fs)
     fc_high=0.01/fn; %normalized superior cut off frequency
     N=2048; %arbitrary
     
-    order = 4; 
+    pad=20;
+    signal_to_filter = [ones(pad,1)*signal(1); signal(:); ones(pad,1)*signal(end)];
+    
+    order = 5; 
     [b,a] = butter(order,[fc_low fc_high],'bandpass');
     freqz(b,a,N)%,fs)
-    result = filter(b,a,signal);
-    
+    res = filtfilt(b,a,signal_to_filter);%zero phase filtering
+    result=res(pad+1:size(res,1)-pad);
 end
