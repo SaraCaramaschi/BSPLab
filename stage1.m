@@ -1,10 +1,9 @@
-function check = stage1(signal, check, threshold)
+function check = stage1(signal, check, threshold_low, threshold_high)
 %function called for each sample of PPG
 
-% 
-    if signal<=0 
+    if signal<=threshold_low 
         check=1;
-    elseif signal>=threshold
+    elseif signal>=threshold_high
         check=1;
     else
         check=check;
