@@ -30,7 +30,7 @@ plot(find(signal_check(:,2)==1),signal_check(find(signal_check(:,2)==1),1),'ro')
 
 %% stage2-3: low and hig pass filter
 
-fs=400;%??????????
+fs=400;
 % fs = 125;
 
 signal_check(:,1) = stage2_3(signal_check(:,1), fs);
@@ -40,73 +40,64 @@ plot(signal_check(:,1))
 
 %% Stage 4: Entrata nel buffer 
 
-% da una parte: filtered PPG, dall'altra raw signal annotation of PPG 
-fs=400;
-pwdLength = 4.8; % secondi
-pwdSamples = 4.8*fs;
+pwdLength = 2.4; % seconds
+pwdSamples = pwdLength*fs; %samples
 
-signal = signal_check(:,1);
-annotation = signal_check(:,2); 
-% Inizializzazione treshold: 
-tresh = zeros(1, length(signal_check(:,1)) - 0.75*pwdSamples);
+
+signal_check(:,3)= zeros(length(signal_check),1);%initialization third column for peaks and valley detection
+%add nan at beginning and end of signal (and annotation of signal) to make 
+%it more realistic as a live acquisition
+signal = cat(1,NaN*ones(pwdSamples+1,1), signal_check(:,1), NaN*ones(pwdSamples+1,1));
+annotation = cat(1,NaN*ones(pwdSamples+1,1), signal_check(:,2), NaN*ones(pwdSamples+1,1));
+
+%initialization variables
 valore=signal(0.75*pwdSamples);
 valore_precedente=signal(0.75*pwdSamples-1);
 segno_incremento=0;
 segno_incremento_precedente=0;
-indice=0;
-j=0;
-peaks=[];
-p=0;
-valleys=[];
-v=0;
-for i = 0.75*pwdSamples:1:(length(signal_check(:,1))-2*pwdSamples)) % si sposta di uno per uno 
-    %aggiorno le variabili
-    valore_precedente=valore;
-    segno_incremento_precedente=segno_incremento;
-    if i+pwdSamples*2<length(signal)%questo controllo penso non serva se la i la facessimo andare fino a quello a cui va ora -1
-       filteredPPGbuff = signal(i:i + pwdSamples*2);
-       tresh(i)= mean(filteredPPGbuff(1:0.75*pwdSamples));%whole non-disturbed span of signal or just avoid disturbed samples??
-       valore=signal(i);
-       if(valore_precedente - valore >0) % il segnale decresce
-           segno_incremento = -1;
-           if(segno_incremento_precedente == 1)
-            % è un picco verso l'alto.
-               if (signal(i-1) > tresh(i-1))%non bisgna comparare segnale e threshold nello stesso punto?
-                   p = p + 1;
-                   peaks(p) = i-1;                   
+
+for k=1:size(signal,1) %signal sampling simulation, k is the first element of the buffer (the oldest value of the vector entering)
+        i= pwdSamples+k+1; %element in the middle of the buffer       
+        if ~isnan(signal(i))
+            valore=signal(i);
+            valore_precedente=signal(i-1);            
+            segno_incremento_precedente=segno_incremento;
+            incremento(k)= valore_precedente - valore;
+            %creation of buffer vectors, change at every iteration (1 in 1
+            %out)
+            buff = signal(k : i+pwdSamples-1);
+            buff_ann = annotation(k : i+pwdSamples-1);
+            %insert NaN in the buffer in correspondance to annotation =1 (disturbed signal)
+            buff(buff_ann==1)= NaN; 
+            %moving average threshold            
+            thresh(k)= nanmean(buff(0.25*pwdSamples:pwdSamples)); 
+            if(incremento(k)>0) % signal is decreasing
+               segno_incremento = -1;
+               if(segno_incremento_precedente == 1)% max                
+                   if (signal(i-1) > thresh(k-1)) % peak
+                       signal_check(k-1,3)= 1;                  
+                   end
+               end 
+           elseif (incremento(k) <0) %signal is increasing
+               segno_incremento = 1;
+               if (segno_incremento_precedente==-1)% min                
+                   if (signal(i-1) < thresh(k-1)) %valley
+                        signal_check(k-1,3)= -1;                    
+                   end
                end
-           end 
-       else
-           segno_incremento = 1;
-           if (segno_incremento_precedente==-1)
-            % è un picco verso il basso
-               if (signal(i-1) < tresh(i-1))
-                   v = v + 1;
-                   valleys(v) = i-1;                   
-               end
-           end
-       end
-       
-     % Buffer array 4.8s raw signal annotation of PPG
-       PPGbuff = signal_check(:,2);
-       % plotto il segnale ogni 100 samples.
-       if i==0.75*pwdSamples+j*100
-          j=j+1;
-          plot(signal(1:i))%il segnale non è in colonna
-          hold on
-          plot(tresh(1:i),'b')
-          hold on
-          if length(picco)>0
-             plot(picco(1:indice),signal(picco(1:indice)),'o')
-             hold on
-          end
-          
-       end
-       pause(0.00001)
-       
+            end
+        end
     end
-   
-end
+
+
+figure()
+plot(signal_check(:,1))
+hold on
+plot(find(signal_check(:,3)==1),signal_check(find(signal_check(:,3)==1),1),'*')
+hold on
+plot(find(signal_check(:,3)==-1),signal_check(find(signal_check(:,3)==-1),1),'o')
+hold on 
+plot(thresh)
 
 
 
