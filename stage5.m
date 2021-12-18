@@ -1,113 +1,90 @@
 %% Stage 5
+%input pulsewave contains just one systolic peak
 
-% Secondo buffer con info su picchi e valli. Consideriamo come input: 
-% altezza buffer e lunghezza 1 (picchi sys = 3, picchi dys = 2, valley = 1, nulla=0 ) 
+function annStage5 = stage5(matrix, fs)
+    signal = matrix(:,1); %pulsewave signal
+    annStage1 = matrix(:,2); %annotation of first stage
+    annStage4 = matrix(:,3); %annotation of fourth stage (systolic peak = 1, diastolic peak = 2, systolic valley = -1)
+    annStage5 = matrix(:,4); %annotation of fifth (current) stage 
+   
 
+    flag = 0;%initialization of boolean variable considering the pulswave as not disturbed
 
-function matrix = stage5(matrix, fs)
-    pw = matrix(:,1);
-    tempo= [1:length(pw)];
-    annStage1 = matrix(:,2);
-    annStage4 = matrix(:,3);
-    annStage5 = zeros(1,length(pw));
-    
-    
-% C'è ritardo: 2.4s. I parametri li calcoliamo sulla:
-% Each time a complete pulse wave (called N-1 pulse wave) is recorded, 
-% the fifth stage with the second decision list checks absolute and 
-% relative pulse wave characteristics.
-% noi conosciamo gia 2.4 sec di segnale+annotazioni (pulswave precedente) 
-
-    flag = 0;
-    % single raw sample disturbed or not 
-    
-    % TODO: ricompatta questo for
-    for sample=1:1:length(pw) 
-        %% Check prima del 3
+    for sample=1:1:length(signal) 
+        %% preliminar Check
         if (annStage1(sample) == 1)
             flag = 1;
             break;
-            % Tutta la pulsewave e' 1, artifact
+            % at least one sample of the pulswave is disturbed -> the whole
+            % pulswave is annotated
         end 
     end
         
     %% Check 3
-    % Calcolo PWA della pulse wave: 
-    % individuo picco e valley e sottraggo
+    % PWA calculation: 
+    % individuation of systolic valley and corresponding systolic peak
     if flag==0
-        picMax = max(pw); 
-        pic = pw(annStage4 == 3);
-        if picMax == pic
-            combaciano = 1; 
-        end
-
-        valley = pw(1); 
-        PWA = pic - valley;
-
-        if PWA <= 2*mean(abs(diff(pw)))
-            flag=1;
+        peak = signal(annStage4 == 1);
+        signal_end = signal(1); 
+        PWA = peak - signal_end;
+        if PWA <= 2*mean(abs(diff(signal)))
+            flag=1; %failed check
         end
     end
     
     %% Check 4
     if flag == 0
         % Rise time 
-        tValley = 1;
-        % prendiamo gli indici di sample del vettore che ha dentro 
-        % i valori == 3
-        tPicSys = tempo(annStage4 == 3);
-        if length(tPicSys) ~= 1
-            tPicSys = tPicSys(1);
-        end
-        PWRT = tPicSys - tValley; 
-        PWRT = PWRT/fs;
-        if PWRT<0.08 || PWRT>0.49
-            flag = 1; 
+        tValley = 1; %valley = first sample of the pulswave
+        tPeakSys = find(annStage4 == 1);
+        PWRT = tPeakSys - tValley; 
+        PWRT = PWRT/fs; %conversion to seconds
+        if PWRT < 0.08 || PWRT > 0.49
+            flag = 1; %failed check
         end
     end
     
     %% Check 5
     if flag==0 
-        tValley = length(pw); 
-        DT = (tValley - tPicSys)/fs; 
-        PWSDRatio = PWRT/DT; 
-        if PWSDRatio>1.1 
-            flag = 1;
+        tValley = length(signal); %last sample of pulsewave is the potential pulsewave end 
+        DiastolicPhase = (tValley - tPeakSys); 
+        DiastolicPhase = DiastolicPhase/fs; %conversion to seconds 
+        PWSDRatio = PWRT/DiastolicPhase; 
+        if PWSDRatio > 1.1 
+            flag = 1; %failed check
         end
     end
     
     %% Check 6 
     if flag==0 
-        PWD = length(pw)/fs; 
+        PWD = (length(signal)-1)/fs; 
         if PWD < 0.27 || PWD > 2.4 
-            flag = 1;
+            flag = 1; %failed check
         end
     end
     
     %% Check 7
     if flag==0
-        NPDys = annStage4(annStage4 == 2); 
-        % prendiamo la lunghezza del vettore che ha dentro i valori 
-        if length(NPDys) > 2
-            flag=1;
+        NumberOfDiastolicPeaks = length(find(annStage4 == 2)); 
+        if NumberOfDiastolicPeaks > 2
+            flag=1; %failed check
         end
     end
     
-    %% Check 8: Monotonia
+    %% Check 8
     if flag==0 
-        sys = pw(1:tPicSys); 
-        difSys = diff(sys); 
-        if ~isempty(difSys(difSys<0)) 
-            flag = 1; 
+        systolicPhase = signal(1:tPeakSys); 
+        if ~isempty(find(diff(systolicPhase)<0)) 
+            flag = 1; %failed check
         end
     end
     
     %% Check 9: 
     if flag==0
-        dys = pw(tPicSys:end); 
-        minDys = min(dys); 
-        if minDys < pw(1) || minDys < pw(end)
-            flag = 1;
+        diastolicPhase = signal(tPeakSys:end); 
+        minDiastolic = min(diastolicPhase); 
+        if minDiastolic < signal(1) || minDiastolic < signal(end)
+            flag = 1; %failed check
         end
     end
     
@@ -115,17 +92,16 @@ function matrix = stage5(matrix, fs)
     % nostra interpretazione di PWALeft e PWARight 
     if flag==0
         PWALeft = PWA; 
-        valley = pw(end); 
-        PWARight = pic - valley;
-        
+        signal_end = signal(end); 
+        PWARight = peak - signal_end;  
         if (PWALeft/PWARight > 0.4 || PWARight/PWALeft > 0.4) 
-            flag=1;
+            flag=1; %failed check
         end
     end
     
     %%
-    if flag==1 
-        annStage5(1:length(pw)-1) = 1;
+    if flag==1 %if failed check
+        annStage5(1:length(signal)-1) = 1; %annotation on the whole pulsewave as disturbed excepts the last sample
     end
     
     if flag==0
@@ -133,12 +109,9 @@ function matrix = stage5(matrix, fs)
         % first potential valleys PWB (pw(1)),     10
         % potential sys peak PWSP (annStage4==3)   11
         % before second potential valley PWE (pw(end-1))   12
-        annStage5 = zeros(1,length(pw)); 
         annStage5(1) = 10; 
-        annStage5(tempo(pw==pic)) = 11; 
+        annStage5(tempo(signal==pic)) = 11; 
         annStage5(end-1) = 12;
     end
-    
-    matrix(:,4) = annStage5;
-    
+        
 end

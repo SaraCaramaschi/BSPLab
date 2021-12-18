@@ -1,10 +1,10 @@
-function [th,check] = stage4 (signal, check1, fs)   
+function [th,annotation4] = stage4 (signal, annotation1, fs)   
     %calculate the moving average threshold
     pwdLength = 2.4; % seconds
     pwdSamples = pwdLength*fs; %samples
     ma_span = 0.75*pwdSamples; %moving average span
     sig = signal;
-    sig (check1==1) = NaN; %create a variable equal to the signal but with NaN where the signal is disturbed (reffering to the check of stage1)
+    sig (annotation1==1) = NaN; %create a variable equal to the signal but with NaN where the signal is disturbed (reffering to the check of stage1)
     th = ones(size(signal,1),1)*NaN;
     for i= ma_span+1:size(sig,1) %first ma_span of the signal is discarded because cannot be associated to a threshold
         th(i) = nanmean(sig(i-ma_span:i));
@@ -17,15 +17,15 @@ function [th,check] = stage4 (signal, check1, fs)
     %identification of true peaks and valleys of the signal considering
     %their position with respect to the threshold just computed
     %initialize check as a vector of zeros
-    check=zeros(size(signal,1),1);
+    annotation4=zeros(size(signal,1),1);
     for i=1:size(pos_valleys,1)
        if (signal(pos_valleys(i)) < th(pos_valleys(i))) %valley
-            check(pos_valleys(i))= -1;
+            annotation4(pos_valleys(i))= -1;
        end
     end
     for i=1:size(pos_peaks,1)               
        if (signal(pos_peaks(i)) > th(pos_peaks(i))) %peak
-            check(pos_peaks(i))= 1;
+            annotation4(pos_peaks(i))= 1;
        end
     end
  
@@ -33,7 +33,7 @@ function [th,check] = stage4 (signal, check1, fs)
     %creation of reference value as maximum between the first 3 pwa
     for j=1:length(pos_valleys)-1
         if j<=3 %reference constructed by the first 3 valley-peak couples
-            ref_peaks(j,:) = find(check(pos_valleys(j):pos_valleys(j+1))==1);%first peak in the interval between two consecutive valleys
+            ref_peaks(j,:) = find(annotation4(pos_valleys(j):pos_valleys(j+1))==1);%first peak in the interval between two consecutive valleys
             if size(ref_peaks(j,:),2)>0
                 ref_pwa(j)= signal(ref_peaks(j,1)) - signal(pos_valley(j));
             else 
@@ -43,12 +43,12 @@ function [th,check] = stage4 (signal, check1, fs)
                 reference_pwa = max(ref_pwa);   
             end
         else
-            position_peak = find(check(pos_valleys(j):pos_valleys(j+1))==1,1);
-            position_peak = position_peak + pos_valleys(j);
+            position_peak = find(annotation4(pos_valleys(j):pos_valleys(j+1))==1,1);
+            position_peak = position_peak + pos_valleys(j)-1;
             pwa = signal(position_peak) - signal(pos_valleys(j));
             if pwa*3 < reference_pwa %diastolic valley-peak couple
-                check(position_peak) = 2;
-                check(pos_valleys(j)) = -2;
+                annotation4(position_peak) = 2;
+                annotation4(pos_valleys(j)) = -2;
             else
                 reference_pwa = pwa; %update of reference pwa with last systolic pwa
             end  

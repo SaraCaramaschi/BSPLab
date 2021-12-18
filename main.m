@@ -3,8 +3,10 @@ close all
 clc
 
 %% Loading 
-PPG = load('PPGm.mat'); % file di martina
-PPG=PPG.PPG;
+% PPG = load('PPGm.mat'); % file di martina
+PPG = load('n10303m.mat');
+PPG=PPG.val;
+PPG = PPG(500:5000);
 PPG=PPG';
 
 % vettore colonna + vettore zeri. 
@@ -12,27 +14,31 @@ PPG=PPG';
 signal_check=cat(2,PPG,zeros(size(PPG,1),1)); 
 
 figure()
-plot(signal_check(:,1),'b')
+plot(signal_check(:,1))
 
 signal_check(:,3) = zeros(1, size(signal_check,1));
 signal_check(:,4) = zeros(1, size(signal_check,1));
 
 %% stage 1: top and bottom clipping
 
-th_high = 0.6; %depends on the tye of recording system
-th_low = 0;
+th_high = 400; %depends on the tye of recording system
+th_low = -400;
+signal_check(:,2)=zeros (size(signal_check,1),1);
 for i=1:size(signal_check,1)
     % 1 per ogni sample sopra treshold e sotto tresh bassa 
     signal_check(i,2)=stage1(signal_check(i,1),signal_check(i,2),th_low,th_high);
 end
 
-% figure()
-% plot(signal_check(1,signal_check(2)==0),'g')signal_check(1,signal_check(2)==1),'k')
+figure()
+plot(signal_check(:,1)) 
+hold on
+plot(find(signal_check(:,2)==1), signal_check(signal_check(:,2)==1,1),'g*')
+
 
 %% stage2-3: low and hig pass filter
 
-fs=400;%??????????
-% fs = 125;
+% fs=400;%??????????
+fs = 125;
 
 signal_check(:,1) = stage2_3(signal_check(:,1), fs);
 
@@ -57,25 +63,27 @@ hold on
 plot(find(signal_check(:,3)==-2), signal_check(signal_check(:,3)==-2,1),'ro')
 
     
-    %% STAGE 5: 
-    % ipotizziamo nella colonna 3 le annotazioni dei picchi/valley
+%% STAGE 5:    
+%initialization column of stage 5 annotations
+signal_check(:,4) = zeros(size(signal_check(:,1),1),1);
+
+pos_systolic_valleys = find (signal_check(:,3) == -1);
+for i = 1:size(pos_systolic_valleys,1)-1
+    pulsewave = signal_check(pos_systolic_valleys(i):pos_systolic_valleys(i+1),:);
+    signal_check(pos_systolic_valleys(i):pos_systolic_valleys(i+1),4) = stage5(pulsewave, fs);
+end
+
+figure()
+plot(signal_check(:,1));
+hold on
+plot(find(signal_check(:,4)==10), signal_check(signal_check(:,4)==10,1),'g*')
+hold on
+plot(find(signal_check(:,4)==11), signal_check(signal_check(:,4)==11,1),'r*')
+hold on
+plot(find(signal_check(:,4)==12), signal_check(signal_check(:,4)==12,1),'go')
     
+     
     
-    % !!! DA SELEZIONARE
-    % Check dell'inizio e fine della pulse wave che consideriamo qui
-    % (corrisponde a check second valley): consideriamo qualsiasi
-    % intervallo tra DUE valli!! e poi valutiamo tutto su quello 
-    
-    % La pulsewave completa entra nel calcolo parametri vari: 
-    
-    % Matrice in cui di lunghezza LA PULSEWAVE e larghezza 4 colonne!! 
-    % Nella prima colonna SEGNALE 
-    % Seconda colonna ANNOTATIONS CHECK 1
-    % Terza colonna ANNOTATIONS CHECK 4 
-    % Quarta colonna ANNOTATIONS CHECK 5 
-%     matrix = stage5(pulsewave, fs);
-    
-    % Aggiunta di matrix a signal_check 
     
     
 
