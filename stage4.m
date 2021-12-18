@@ -11,31 +11,31 @@ function [th,annotation4] = stage4 (signal, annotation1, fs)
     end
     
     %find peaks and valleys with matlab function findpeaks
-    [~,pos_peaks] = findpeaks(signal);
-    [~,pos_valleys] = findpeaks(-signal); %consider the signal upsidedown to turn valleys into peaks and be identificable by findpeaks function
+    [~,pos_max] = findpeaks(signal);
+    [~,pos_min] = findpeaks(-signal); %consider the signal upsidedown to turn valleys into peaks and be identificable by findpeaks function
    
     %identification of true peaks and valleys of the signal considering
     %their position with respect to the threshold just computed
     %initialize check as a vector of zeros
     annotation4=zeros(size(signal,1),1);
-    for i=1:size(pos_valleys,1)
-       if (signal(pos_valleys(i)) < th(pos_valleys(i))) %valley
-            annotation4(pos_valleys(i))= -1;
+    for i=1:size(pos_min,1)
+       if (signal(pos_min(i)) < th(pos_min(i))) %valley
+            annotation4(pos_min(i))= -1;
        end
     end
-    for i=1:size(pos_peaks,1)               
-       if (signal(pos_peaks(i)) > th(pos_peaks(i))) %peak
-            annotation4(pos_peaks(i))= 1;
+    for i=1:size(pos_max,1)               
+       if (signal(pos_max(i)) > th(pos_max(i))) %peak
+            annotation4(pos_max(i))= 1;
        end
     end
  
-
+    pos_valleys = find (annotation4 == -1);
     %creation of reference value as maximum between the first 3 pwa
     for j=1:length(pos_valleys)-1
         if j<=3 %reference constructed by the first 3 valley-peak couples
             ref_peaks(j,:) = find(annotation4(pos_valleys(j):pos_valleys(j+1))==1);%first peak in the interval between two consecutive valleys
             if size(ref_peaks(j,:),2)>0
-                ref_pwa(j)= signal(ref_peaks(j,1)) - signal(pos_valley(j));
+                ref_pwa(j)= signal(ref_peaks(j,1)) - signal(pos_valleys(j));
             else 
                 ref_pwa(j)=0;
             end
