@@ -39,7 +39,7 @@ function annStage5 = stage5(matrix, fs)
         tPeakSys = find(annStage4 == 1);
         PWRT = tPeakSys - tValley; 
         PWRT = PWRT/fs; %conversion to seconds
-        if PWRT < 0.08 || PWRT > 0.49
+        if ((PWRT < 0.08) | (PWRT > 0.49))
             flag = 1; %failed check
         end
     end
@@ -83,7 +83,7 @@ function annStage5 = stage5(matrix, fs)
     if flag==0
         diastolicPhase = signal(tPeakSys:end); 
         minDiastolic = min(diastolicPhase); 
-        if minDiastolic < signal(1) || minDiastolic < signal(end)
+        if minDiastolic < signal(1) | minDiastolic < signal(end)
             flag = 1; %failed check
         end
     end
@@ -94,7 +94,7 @@ function annStage5 = stage5(matrix, fs)
         PWALeft = PWA; 
         signal_end = signal(end); 
         PWARight = peak - signal_end;  
-        if (PWALeft/PWARight > 0.4 || PWARight/PWALeft > 0.4) 
+        if (PWALeft/PWARight > 0.4 | PWARight/PWALeft > 0.4) 
             flag=1; %failed check
         end
     end
@@ -107,10 +107,10 @@ function annStage5 = stage5(matrix, fs)
     if flag==0
         %% Definiamo tre sample specifici
         % first potential valleys PWB (pw(1)),     10
-        % potential sys peak PWSP (annStage4==3)   11
+        % potential sys peak PWSP (annStage4==1)   11
         % before second potential valley PWE (pw(end-1))   12
         annStage5(1) = 10; 
-        annStage5(tempo(signal==pic)) = 11; 
+        annStage5(tPeakSys) = 11; 
         annStage5(end-1) = 12;
     end
         

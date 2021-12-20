@@ -4,7 +4,7 @@ function result = stage2_3(signal, fs)
     fc_low=0.01/fn; %normalized inferior cut off frequency
     fc_high=15/fn; %normalized superior cut off frequency
     N=2048; %arbitrary  
-    order = 5; % specificato nel paper
+    order = 4; % specificato nel paper
     
 %scompongo high (fc=0.01) e low pass (fc=15)
     [b1,a1] = butter(order,fc_low ,'high','s');
