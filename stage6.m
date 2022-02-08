@@ -26,14 +26,19 @@ AnnStage6 = pulsewave_1(:, 5); %relativo a N-1
 %check direct neighbors inutile, lo faccio nel main
 
 flag = 0;
-    
+j=0;
 % Check 11
     if (flag == 0)
-        risetime1 = find(signal_1(AnnStage5_1 == 11)) - 1;
-        risetime2 = find(signal_2(AnnStage5_2 == 11)) - 1;
+        
+        risetime1 = find(AnnStage5_1 == 11);
+        %- 1
+        risetime2 =find(AnnStage5_2 == 11) ;
         PWRT = risetime1/risetime2;
+        
         if (PWRT > 3 | PWRT < 0.33)
+            
             flag = 1; %failed check
+            
         end
     end
 
@@ -43,6 +48,7 @@ flag = 0;
         PWD2 = length(signal_2);
         if (PWD1/PWD2 > 3 | PWD1/PWD2 < 0.33)
             flag = 1; %failed check
+            
         end
     end
 
@@ -52,6 +58,7 @@ flag = 0;
         PWA_2 = signal_2(AnnStage5_2 == 11) - signal_2(1);
         if PWA_1/PWA_2 < 0.25 | PWA_1/PWA_2 > 4
             flag = 1; %failed check
+           
         end
 
     end

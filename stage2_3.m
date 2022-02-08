@@ -7,12 +7,12 @@ function result = stage2_3(signal, fs)
     order = 4; % specificato nel paper
     
 %scompongo high (fc=0.01) e low pass (fc=15)
-    [b1,a1] = butter(order,fc_low ,'high','s');
-    figure()
-    freqz(b1,a1,N,fs)
-    [b2,a2] = butter(order,fc_high,'low','s');
-    figure()
-    freqz(b2,a2,N,fs)
+    [b1,a1] = butter(order,fc_low ,'high');
+    %figure()
+    %freqz(b1,a1,N,fs);
+    [b2,a2] = butter(order,fc_high,'low');
+    %figure()
+    %freqz(b2,a2,N,fs);
     
     res = filter(b1,a1,signal);
     result = filter(b2,a2,res);
