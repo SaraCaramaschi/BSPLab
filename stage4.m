@@ -1,5 +1,19 @@
-function [th,annotation4] = stage4 (check,fs)   
-    %calculate the moving average threshold
+function [th,annotation4] = stage4 (check,fs)
+%identification of peaks and valleys and their classification in systolic
+%or diastolic:
+%1) computation of moving average threshold
+%2) identification of local maxima and minima
+%3) comparison of local maxima and minima with threshold to establish if
+%they are real peaks and valleys correspondingly
+%4) computation of reference PWA and mean consecutive valleys distance
+%excluding samples classified as disturbed by stage1
+%5) systolic peak criterion verification: a peak is classified as systolic
+%if its amplitude multiplied by a scaling factor (3) is greater than
+%reference PWA
+%6)???
+
+
+%calculate the moving average threshold
     p=0;
     signal=check(:,1);
     annotation1=check(:,2);
