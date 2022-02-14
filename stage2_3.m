@@ -1,4 +1,6 @@
+
 function result = stage2_3(signal, fs)
+
 %filtering of the signal
 
 % INPUT:
