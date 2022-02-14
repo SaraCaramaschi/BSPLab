@@ -1,70 +1,54 @@
-%% Stage 6
 
-function AnnStage6 = stage6(pulsewave_1, pulsewave_2)
+function annotation6 = stage6(pulsewave_1, pulsewave_2)
 
-%nella colonna 3 di matrix ci sono picchi e valli
- % first potential valleys PWB 10
- % potential sys peak PWSP 11
- % before second potential valley PWE (pw(end-1))   12
-%p1 è la N-1, p2 è la N-2 waveform
-%signal 2 è la parte di segnale che viene prima di signal 1
+%verification of checks on couples of consecutive pulsewaves
 
-signal_1 = pulsewave_1(:, 1);
-signal_2 = pulsewave_2(:, 1);
-AnnStage5_1 = pulsewave_1(:, 4);
-AnnStage5_2 = pulsewave_2(:, 4);
-AnnStage6 = pulsewave_1(:, 5); %relativo a N-1
+% INPUT:
+%     pulsewave_1: portion of signal_check matrix of the right (successive) pulsewave of the couple
+%     pulsewave_2: portion of signal_check matrix of the left (previous) pulsewave of the couple
+% OUTPUT:
+%     annotation6: updated versio of annotation vector 
 
-% %Check direct neighbors
-%     if (signal_2(end-1) == 12 AND signal_1(1) == 10)
-%         %%yey sono direct neighbors puoi andare avanti
-%         flag = 0;
-%     else
-%         flag = 1; %non sono direct neighbors, passa ai successivi
-%     end
+signal_1 = pulsewave_1(:,1);
+signal_2 = pulsewave_2(:,1);
+annotation5_1 = pulsewave_1(:,4);
+annotation5_2 = pulsewave_2(:,4);
+annotation6 = pulsewave_1(:,5); %relative to second pulsewave of the couple
 
-%check direct neighbors inutile, lo faccio nel main
+flag = 0; %initialization of boolean variable considering the pulswave as not disturbed
 
-flag = 0;
-j=0;
-% Check 11
-    if (flag == 0)
-        
-        risetime1 = find(AnnStage5_1 == 11);
-        %- 1
-        risetime2 =find(AnnStage5_2 == 11) ;
-        PWRT = risetime1/risetime2;
-        
-        if (PWRT > 3 | PWRT < 0.33)
-            
-            flag = 1; %failed check
-            
-        end
+    %% Check 11
+    %Rize Time variation     
+    risetime1 = find(annotation5_1 == 11);
+    risetime2 = find(annotation5_2 == 11) ;
+    PWRT = risetime1/risetime2;
+    if PWRT > 3 | PWRT < 0.33
+        flag = 1; %failed check
     end
 
- % Check 12
-    if (flag == 0)
+    %% Check 12
+    %PulseWave Duration variation
+    if flag == 0
         PWD1 = length(signal_1);
         PWD2 = length(signal_2);
-        if (PWD1/PWD2 > 3 | PWD1/PWD2 < 0.33)
-            flag = 1; %failed check
-            
+        if PWD1/PWD2 > 3 | PWD1/PWD2 < 0.33
+            flag = 1; %failed check           
         end
     end
 
- % Check 13
-    if (flag == 0)
-        PWA_1 = signal_1(AnnStage5_1 == 11) - signal_1(1);
-        PWA_2 = signal_2(AnnStage5_2 == 11) - signal_2(1);
+    %% Check 13
+    %PulseWave Amplitude variation
+    if flag == 0
+        PWA_1 = signal_1(annotation5_1 == 11) - signal_1(1);
+        PWA_2 = signal_2(annotation5_2 == 11) - signal_2(1);
         if PWA_1/PWA_2 < 0.25 | PWA_1/PWA_2 > 4
-            flag = 1; %failed check
-           
+            flag = 1; %failed check          
         end
-
     end
 
-  if flag == 1
-      AnnStage6(:) = 1;
-  end
+    %% Final annotation
+    if flag == 1
+        annotation6(:) = 1;
+    end
 
-  end
+end

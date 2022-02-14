@@ -17,7 +17,7 @@ function annotaion5 = stage5(matrix, fs)
       
     flag =0; %initialization of boolean variable considering the pulswave as not disturbed
  
-    %% preliminar Check 
+    %% Preliminar Check 
     % if at least one sample of the pulswave is classified as disturbed by stage1 
     % -> the whole pulswave is annotated
     for sample = 1:length(signal) 
@@ -52,7 +52,7 @@ function annotaion5 = stage5(matrix, fs)
     end
     
     %% Check 5
-    %Systolic-Diastolic Ratio
+    % Systolic-Diastolic Ratio
     if flag==0 
         tValley = length(signal); %last sample of pulsewave is the potential pulsewave end 
         DiastolicPhase = (tValley - tPeakSys); 
@@ -112,7 +112,7 @@ function annotaion5 = stage5(matrix, fs)
         end
     end
     
-    %% final annotation
+    %% Final annotation
     if flag==1 % failed check
         %annotation on the whole pulsewave as disturbed excepts the last sample
         %(that corresponds to beginning of following pulsewave)

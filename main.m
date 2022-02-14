@@ -6,13 +6,15 @@ clc
 for dataset = 1:10
    %% Loading 
    %training set
-   file_train = ["0115_8min.mat","0123_8min.mat","0030_8min.mat","0031_8min.mat","0032_8min.mat","0105_8min.mat","0035_8min.mat","0028_8min.mat","0018_8min.mat","0029_8min.mat"];
-   load(file_train(dataset));
-   %test set
-%    file_test = ["0103_8min.mat","0134_8min.mat","0133_8min.mat","0127_8min.mat","0125_8min.mat","0123_8min.mat","0122_8min.mat","0121_8min.mat","0104_8min.mat","0103_8min.mat","0023_8min.mat","0016_8min.mat","0015_8min.mat","0009_8min.mat"];
-%    load(file_test(dataset));
+%     load('training_dataset.mat');
+%     PPG = training_dataset{dataset}.signal.pleth.y;
+%     LABELS = training_dataset{dataset}.labels.pleth.artif.x;
    
-   PPG = signal.pleth.y;
+   %test set
+    load('test_dataset.mat');
+    PPG = test_dataset{dataset}.signal.pleth.y;
+    LABELS = test_dataset{dataset}.labels.pleth.artif.x;
+
 
     %%
     %create a matrix having as first column the signal and as second column
@@ -128,8 +130,11 @@ for dataset = 1:10
 %?????
     y=-3000:1:3000;
     x=find(signal_check(:,4)==10);
-    if length(labels.pleth.artif.x)>0 & labels.pleth.artif.x(1)==0
-        labels.pleth.artif.x=labels.pleth.artif.x(3:end);
+    %??????????
+%     LABELS = training_dataset{dataset}.labels.pleth.artif.x;
+    
+    if length(LABELS)>0 & LABELS(1)==0
+        LABELS = LABELS(3:end);
     end
     
 %     figure()
@@ -150,22 +155,23 @@ for dataset = 1:10
 %     hold on
 %     plot(find(signal_check(:,5)==1), signal_check(signal_check(:,5)==1,1),'r*')
 %     hold on
-%     plot(labels.pleth.artif.x,signal_check(labels.pleth.artif.x,1),'ko')
+%     plot(LABELS,signal_check(LABELS,1),'ko')
 %     legend('filtered signal','PWB','PWSP','PWE','failed check stage 1','failed check stage 4','failed check stage 5','failed check stage 6','reference annotations' extremes');
 
     %% algorithm evaluation
-    %initialization vector of final computed annotation 
-    error = zeros(size(signal_check(:,1),1),1);
-    error(find(signal_check(:,2)==1))=1;
-    error(find(signal_check(:,3)==1))=1;
-    error(find(signal_check(:,4)==1))=1;
-    error(find(signal_check(:,5)==1))=1;
-    %????
-    art = zeros(size(signal_check(:,1),1),1);
-    %reference annotations (vector containing positions of the start and end of the artifact portion) 
-    label = labels.pleth.artif.x'; 
+    %initialization complexive computed annotations' vector
+    annotation_computed = zeros(size(signal_check(:,1),1),1);
+    % complexive computed annotations' vector updating
+    annotation_computed(find(signal_check(:,2)==1)) =1;
+    annotation_computed(find(signal_check(:,3)==1)) =1;
+    annotation_computed(find(signal_check(:,4)==1)) =1;
+    annotation_computed(find(signal_check(:,5)==1)) =1;
+    %reference annotations positions (vector containing positions of the start and end of the artifact portion) 
+    pos_annotation_reference = LABELS'; 
+    %initialization reference annotation vector (made by zeros and ones)
+    annotation_reference = zeros(size(signal_check(:,1),1),1);
     
-    performance(dataset) = evaluation(label,art,error);
+    performance(dataset) = evaluation(pos_annotation_reference, annotation_reference, annotation_computed);
 
 end
 
