@@ -6,14 +6,19 @@ clc
 for dataset = 1:10
    %% Loading 
    %training set
-%     load('training_dataset.mat');
-%     PPG = training_dataset{dataset}.signal.pleth.y;
-%     LABELS = training_dataset{dataset}.labels.pleth.artif.x;
+    load('training_dataset.mat');
+    PPG = training_dataset{dataset}.signal.pleth.y;
+    LABELS = training_dataset{dataset}.labels.pleth.artif.x;
    
    %test set
-    load('test_dataset.mat');
-    PPG = test_dataset{dataset}.signal.pleth.y;
-    LABELS = test_dataset{dataset}.labels.pleth.artif.x;
+%     load('test_dataset.mat');
+%     PPG = test_dataset{dataset}.signal.pleth.y;
+%     LABELS = test_dataset{dataset}.labels.pleth.artif.x;
+    
+    %???
+    if ~isempty(LABELS) && LABELS(1)==0
+        LABELS = LABELS(3:end);
+    end
 
 
     %%
@@ -127,16 +132,7 @@ for dataset = 1:10
 %     legend('filtered signal','check failed');
     
     %% final visualization highlighting were the filtered signal has failed checks in stage 1,4,5,6
-%?????
-    y=-3000:1:3000;
-    x=find(signal_check(:,4)==10);
-    %??????????
-%     LABELS = training_dataset{dataset}.labels.pleth.artif.x;
-    
-    if length(LABELS)>0 & LABELS(1)==0
-        LABELS = LABELS(3:end);
-    end
-    
+      
 %     figure()
 %     plot(signal_check(:,1));
 %     hold on
