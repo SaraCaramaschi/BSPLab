@@ -15,7 +15,11 @@ for dataset = 1:10
 %     PPG = test_dataset{dataset}.signal.pleth.y;
 %     LABELS = test_dataset{dataset}.labels.pleth.artif.x;
     
-    %???
+    %if first annotated portion starts at the beginning of the signal, can't be
+    %detected by the algorithm because moving-average threshold can't be
+    %computed for the first part of the signal (equivalent to the span necessary for
+    %its own computation) -> first couple of annotations (initial and final
+    %position of the perturbated portion) is discarded
     if ~isempty(LABELS) && LABELS(1)==0
         LABELS = LABELS(3:end);
     end
@@ -152,7 +156,7 @@ for dataset = 1:10
 %     plot(find(signal_check(:,5)==1), signal_check(signal_check(:,5)==1,1),'r*')
 %     hold on
 %     plot(LABELS,signal_check(LABELS,1),'ko')
-%     legend('filtered signal','PWB','PWSP','PWE','failed check stage 1','failed check stage 4','failed check stage 5','failed check stage 6','reference annotations' extremes');
+%     legend('filtered signal','PWB','PWSP','PWE','failed check stage 1-4-5-6','reference annotations extremes');
 
     %% algorithm evaluation
     %initialization complexive computed annotations' vector

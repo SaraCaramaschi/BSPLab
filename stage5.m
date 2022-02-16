@@ -7,7 +7,7 @@ function annotaion5 = stage5(matrix, fs)
 %     matrix: single pulsewave's portion of the signal_check matrix
 %     fs: sampling frequency
 % OUTPUT:
-%     annotation5: updated versio of annotation vector   
+%     annotation5: updated version of annotation vector   
        
     signal = matrix(:,1); %pulsewave signal
     annotation1 = matrix(:,2); %stage1 annotation
@@ -91,18 +91,20 @@ function annotaion5 = stage5(matrix, fs)
     end
     
     %% Check 9: 
-    %?????????????????negative valley in diastolic phase
+    %excessive low-amplitude valley in DiastolicPhase:
+    %check fails when amplitude difference between PWE or PWB from DiastolicPhase
+    %minimum overcomes established threshold
     if flag==0
         diastolicPhase = signal(tPeakSys:end); 
         minDiastolic = min(diastolicPhase); 
-        if (signal(tPeakSys) - signal(1)) > 2*(signal(tPeakSys) - minDiastolic)|...
-                (signal(tPeakSys) - signal(end)) > 2*(signal(tPeakSys) - minDiastolic)
+        if (signal(tPeakSys) - minDiastolic) > 2*(signal(tPeakSys) - signal(1))|...
+                (signal(tPeakSys) - minDiastolic) > 1.7*(signal(tPeakSys) - signal(end))
             flag = 1; %failed check         
         end
     end
     
     %% Check 10: 
-    % PWALeft e PWARight 
+    % PWALeft and PWARight 
     if flag==0
         PWALeft = PWA ;
         signal_end = signal(end); 

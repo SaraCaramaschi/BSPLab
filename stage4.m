@@ -136,7 +136,7 @@ function [th,annotation4] = stage4 (check,fs)
                     annotation4(pos_valleys(j)) =0; 
                 else
                     %annotate signal between the valleys as disturbed
-                    annotation4(pos_valleys(j):pos_valleys(j+1)) =1;
+                    annotation4(pos_valleys(j):pos_valleys(j+1)-1) =1;
                 end
             end            
         end

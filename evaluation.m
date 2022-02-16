@@ -2,9 +2,9 @@
 function [cm,result] = evaluation(pos_annotation_reference,annotation_reference,annotation_computed)
 
 %algorithm performance evaluation: considering that the portions of signal 
-%annotated as distured by the algorithm go from one valley to another
+%annotated as disturbed by the algorithm go from one valley to another
 %(considering the whole pulsewave) and that the identification of the
-%valleys is per se something evaluated by algorithm -> the decision was to
+%valleys is per se performed by the algorithm -> the decision was to
 %give different weights to the two types of inaccuracy (simple annotation
 %error and annotation error due to incorrect valley identification)
 
@@ -26,13 +26,11 @@ function [cm,result] = evaluation(pos_annotation_reference,annotation_reference,
     
     %vector of comparison sample by sample: 1 when equal, 0 when different
     match = (annotation_reference == annotation_computed);
-    %count how many times there is no match between computed and reference
-    %annotations
+    %count of not-matched samples between computed and reference annotations
     n1 = length(find(match==0));
     
-    %initialization count not matched samples in a more permissive range
-    %(extended by 150 samples on the left and on the right of the
-    % reference annotations' interval)
+    %count of not-matched samples in range equal to reference 
+    %annotations' interval extended by 150 samples on the left and on the right
     count=0; 
     for i = 1:length(pos_annotation_reference)-1
         for j = pos_annotation_reference(i)-150 : pos_annotation_reference(i)+150
@@ -41,16 +39,13 @@ function [cm,result] = evaluation(pos_annotation_reference,annotation_reference,
             end
         end
     end
-    %count how many time there is no match between computed and reference
-    %annotations but in a more permissive range???
     n2 = length(count);
     
-    %performance is computed as the maximum (100) to which is subtracted
-    %the simple non-match with weight 1 and the non-match in permissive
-    %range with weigth 0.5, then normalized by the total number of
+    %performance is computed as the maximum (100) minus
+    %n1 weighted 1 and n2 weigthed 0.5, then normalized by the total number of
     %annotated samples by the reference classification
     result = 100 -((n1*100)+(n2*100*0.5)) / length(annotation_reference);
     
+    %confusion matrix 
     cm = confusionmat(annotation_reference,annotation_computed);
-%     CM = confusionchart(annotation_reference,annotation_computed);
 end
