@@ -1,5 +1,5 @@
 
-function result = evaluation(pos_annotation_reference,annotation_reference,annotation_computed)
+function [cm,result] = evaluation(pos_annotation_reference,annotation_reference,annotation_computed)
 
 %algorithm performance evaluation: considering that the portions of signal 
 %annotated as distured by the algorithm go from one valley to another
@@ -50,4 +50,7 @@ function result = evaluation(pos_annotation_reference,annotation_reference,annot
     %range with weigth 0.5, then normalized by the total number of
     %annotated samples by the reference classification
     result = 100 -((n1*100)+(n2*100*0.5)) / length(annotation_reference);
+    
+    cm = confusionmat(annotation_reference,annotation_computed);
+%     CM = confusionchart(annotation_reference,annotation_computed);
 end

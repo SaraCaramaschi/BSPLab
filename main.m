@@ -167,11 +167,33 @@ for dataset = 1:10
     %initialization reference annotation vector (made by zeros and ones)
     annotation_reference = zeros(size(signal_check(:,1),1),1);
     
-    performance(dataset) = evaluation(pos_annotation_reference, annotation_reference, annotation_computed);
+    [cm{dataset},performance(dataset)] = evaluation(pos_annotation_reference, annotation_reference, annotation_computed);
+    TN = cm{dataset}(1,1);
+    if size(cm{dataset})~= [1,1] 
+        FP = cm{dataset}(1,2);
+        FN = cm{dataset}(2,1);
+        TP = cm{dataset}(2,2);
+        PRECISION = TP/(TP+FP);
+        RECALL = TP/(TP+FN);
+        F1(dataset) = (PRECISION*RECALL*2)/(PRECISION+RECALL);
+        acc(dataset) = (TP+TN)/size(annotation_computed,1);
+        classification_error(dataset) = (FP+FN)/size(annotation_computed,1);
+    else 
+        F1(dataset) =NaN; %no TP -> F1=NaN even if the computed annotations are correct
+        FP = 0;
+        FN = 0;
+        TP = 0;
+        acc(dataset) =(TP+TN)/size(annotation_computed,1);
+        classification_error(dataset) = (FP+FN)/size(annotation_computed,1);
 
+    end
+    
 end
 
 %% average performance on train/test set
 mean_performance = mean (performance)
+F1_mean = nanmean(F1)
+mean_acc = nanmean(acc)
+mean_ce = nanmean(classification_error)
 
 
