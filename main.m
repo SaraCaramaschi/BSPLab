@@ -33,8 +33,8 @@ for dataset = 1:10
 
     %% stage 1: top and bottom clipping
 
-    th_high = 10.3; %depends on the type of recording system
-    th_low = -10.3;
+    th_high = 15; %depends on the type of recording system
+    th_low = -15;
     for sample=1:size(signal_check,1)
         signal_check(sample,2)=stage1(signal_check(sample,1),signal_check(sample,2),th_low,th_high);
     end
@@ -187,6 +187,7 @@ for dataset = 1:10
         classification_error(dataset) = (FP+FN)/size(annotation_computed,1);
 
     end
+    
     
 end
 
