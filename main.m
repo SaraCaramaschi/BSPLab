@@ -4,16 +4,16 @@ clc
 
 %%
 for dataset = 1:10
-   %% Loading 
+   % Loading 
    %training set
-    load('training_dataset.mat');
-    PPG = training_dataset{dataset}.signal.pleth.y;
-    LABELS = training_dataset{dataset}.labels.pleth.artif.x;
-   
+%     load('training_dataset.mat');
+%     PPG = training_dataset{dataset}.signal.pleth.y;
+%     LABELS = training_dataset{dataset}.labels.pleth.artif.x;
+%    
    %test set
-%     load('test_dataset.mat');
-%     PPG = test_dataset{dataset}.signal.pleth.y;
-%     LABELS = test_dataset{dataset}.labels.pleth.artif.x;
+    load('test_dataset.mat');
+    PPG = test_dataset{dataset}.signal.pleth.y;
+    LABELS = test_dataset{dataset}.labels.pleth.artif.x;
     
     %if first annotated portion starts at the beginning of the signal, can't be
     %detected by the algorithm because moving-average threshold can't be
@@ -30,25 +30,26 @@ for dataset = 1:10
     %the initialization of stage1 check
     signal_check=cat(2,PPG,zeros(size(PPG,1),1)); 
 
-    %plot of the original signal
+%     plot of the original signal
 %     figure()
 %     plot(signal_check(:,1))
 %     title('SIGNAL');
 
     %% stage 1: top and bottom clipping
 
-    th_high = 15; %depends on the type of recording system
-    th_low = -15;
+    th_high = 10.5; %depends on the type of recording system
+    th_low = -10.5;
     for sample=1:size(signal_check,1)
         signal_check(sample,2)=stage1(signal_check(sample,1),signal_check(sample,2),th_low,th_high);
     end
 
     %plot highlighting samples failing stage1 check
 %     figure()
-%     plot(signal_check(:,1))
+%     s=signal_check(:,1);
+%     plot(s(15800:17000))
 %     title('STAGE 1')
-%     hold on
-%     plot(find(signal_check(:,2)==1), signal_check(signal_check(:,2)==1,1),'g*')
+%     %hold on
+%     %plot(find(signal_check(:,2)==1), signal_check(signal_check(:,2)==1,1),'g*')
 %     legend('signal','anotation stage1');
 
     
@@ -59,9 +60,11 @@ for dataset = 1:10
     %the matrix
     signal_check(:,1) = stage2_3(signal_check(:,1), fs);
 
+
     %plot of filtered signal
 %     figure()
-%     plot(signal_check(:,1))
+%     s=signal_check(:,1);
+%     plot(s(15800:17000))
 %     title('STAGE 2+3 - POST FILTER');
 
     %% Stage 4: peaks and valleys identification and classification (systolic or diastolic)
@@ -135,29 +138,6 @@ for dataset = 1:10
 %     plot(find(signal_check(:,5)==1), signal_check(signal_check(:,5)==1,1),'r*')
 %     legend('filtered signal','check failed');
     
-    %% final visualization highlighting were the filtered signal has failed checks in stage 1,4,5,6
-      
-%     figure()
-%     plot(signal_check(:,1));
-%     hold on
-%     title(FINAL PLOT');
-%     plot(find(signal_check(:,4)==10), signal_check(signal_check(:,4)==10,1),'g*')
-%     hold on
-%     plot(find(signal_check(:,4)==11), signal_check(signal_check(:,4)==11,1),'bl*')
-%     hold on
-%     plot(find(signal_check(:,4)==12), signal_check(signal_check(:,4)==12,1),'ro')
-%     hold on
-%     plot(find(signal_check(:,3)==1), signal_check(signal_check(:,2)==1,1),'r*')
-%     hold on
-%     plot(find(signal_check(:,3)==1), signal_check(signal_check(:,3)==1,1),'r*')
-%     hold on 
-%     plot(find(signal_check(:,4)==1), signal_check(signal_check(:,4)==1,1),'r*')
-%     hold on
-%     plot(find(signal_check(:,5)==1), signal_check(signal_check(:,5)==1,1),'r*')
-%     hold on
-%     plot(LABELS,signal_check(LABELS,1),'ko')
-%     legend('filtered signal','PWB','PWSP','PWE','failed check stage 1-4-5-6','reference annotations extremes');
-
     %% algorithm evaluation
     %initialization complexive computed annotations' vector
     annotation_computed = zeros(size(signal_check(:,1),1),1);
@@ -191,8 +171,47 @@ for dataset = 1:10
         classification_error(dataset) = (FP+FN)/size(annotation_computed,1);
 
     end
-    
-    
+    %% Metric Calculation
+    %create a new matrix with the filtered PPG in the first column.
+    %the second column have all the annotations and the error. 
+    result=cat(2,signal_check(:,1),zeros(size(signal_check(:,1),1),1));
+    result(find(signal_check(:,4)==10),2)=10; % begin of the pulsewave
+    result(find(signal_check(:,4)==11),2)=11; % peak of the pulsewave
+    result(find(signal_check(:,4)==12),2)=12; % end of the pulewave
+    result(find(signal_check(:,2)==1),2)=1; 
+    result(find(signal_check(:,3)==1),2)=1; 
+    result(find(signal_check(:,4)==1),2)=1; 
+    result(find(signal_check(:,5)==1),2)=1; 
+    begin=find(result(:,2)==10);
+    peak=find(result(:,2)==11);
+    ended=find(result(:,2)==12);
+    %calculation of the metric for all the pulsewave.
+    for i=1:length(begin)
+        PWA=result(peak(i),1)-result(begin(i),1); %Pulse wave amplitude
+        PWD=ended(i)-begin(i);   %Pulse wave duration
+        risetime=peak(i)-begin(i);
+    end
+    % calculation of the mean metric. 
+    PWA_mean(dataset)=mean(PWA);
+    PWD_mean(dataset)=mean(PWD);
+    risetime_mean(dataset)=mean(risetime);
+    pulserate(dataset)=length(peak)/8;
+    %% Final plot
+    figure()
+    plot(result(:,1));
+    hold on
+    title('FINAL PLOT');
+    plot(begin, result(begin,1),'g*')
+    hold on
+    plot(peak, result(peak,1),'bl*')
+    hold on
+    plot(ended, result(ended,1),'ro')
+    hold on
+    plot(find(result(:,2)==1), result(result(:,2)==1,1),'r*')
+    hold on
+    plot(LABELS,signal_check(LABELS,1),'ko')
+    legend('filtered signal','PWB','PWSP','PWE','failed check stage 1-4-5-6','reference annotations extremes');
+        
 end
 
 %% average performance on train/test set
@@ -200,5 +219,5 @@ mean_performance = mean (performance)
 F1_mean = nanmean(F1)
 mean_acc = nanmean(acc)
 mean_ce = nanmean(classification_error)
-
+%%
 
