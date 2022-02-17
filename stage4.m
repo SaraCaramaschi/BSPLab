@@ -104,20 +104,18 @@ function [th,annotation4] = stage4 (check,fs)
     
 %5) systolic-diastolic peaks-valleys classification + reference update
     for j = 1:length(pos_valleys)-1 
-        % find all peaks between two valleys       
-        position_peaks=[];
-        position_peaks = find(annotation4(pos_valleys(j):pos_valleys(j+1)) ==10);
+        % find all peaks between two valleys 
+       
+        position_peak = find(annotation4(pos_valleys(j):pos_valleys(j+1)) ==10);
         %signal is not disturbed
         if annotation4(pos_valleys(j):pos_valleys(j+1)) ~=1 
             %there is at least one peak
-            if ~isempty(position_peaks) 
-                position_peaks = position_peaks + pos_valleys(j)-1;
-                % eliminate excess peaks
-                annotation4(position_peaks(2:end)) =0; 
-                position_peak = position_peaks(1);
+            if ~isempty(position_peak) 
+                position_peak = position_peak + pos_valleys(j)-1;
                 %pulsewave PWA calculation
                 pwa = signal(position_peak) - signal(pos_valleys(j));
-                
+%                 position_peak=position_peaks(1);
+%                 annotation4(position_peaks(2:end))=0;
                 %verification of criterion
                 if pwa*3 < reference_pwa %diastolic valley-peak couple
                     annotation4(position_peak) =2;

@@ -5,15 +5,15 @@ clc
 %%
 for dataset = 1:10
    % Loading 
-   %training set
-    load('training_dataset.mat');
-    PPG = training_dataset{dataset}.signal.pleth.y;
-    LABELS = training_dataset{dataset}.labels.pleth.artif.x;
-  
-   %test set
-%     load('test_dataset.mat');
-%     PPG = test_dataset{dataset}.signal.pleth.y;
-%     LABELS = test_dataset{dataset}.labels.pleth.artif.x;
+   %  training set
+%     load('training_dataset.mat');
+%     PPG = training_dataset{dataset}.signal.pleth.y;
+%     LABELS = training_dataset{dataset}.labels.pleth.artif.x;  
+
+%   test set
+    load('test_dataset.mat');
+    PPG = test_dataset{dataset}.signal.pleth.y;
+    LABELS = test_dataset{dataset}.labels.pleth.artif.x;
     
     %if first annotated portion starts at the beginning of the signal, can't be
     %detected by the algorithm because moving-average threshold can't be
@@ -155,22 +155,25 @@ for dataset = 1:10
     
     %metrics calculation starting from confusion matrix
     TN = cm{dataset}(1,1);
-    if size(cm{dataset})~= [1,1] %there are signals where there are no annotations 
+    if size(cm{dataset})== [1,1] %there are signals where there are no annotations 
         %accordingly to the absence of artifacts and so only the TN
         %component is reported in the confusion matrix
+        FP=0;
+        FN=0;
+        TP=0;
+    else
         FP = cm{dataset}(1,2);
         FN = cm{dataset}(2,1);
         TP = cm{dataset}(2,2);
+    end
         precision (dataset) = TP/(TP+FP);
         recall = TP/(TP+FN);
         F1(dataset) = (precision*recall*2)/(precision+recall);
         specificity (dataset) = TN/(TN+FP);
         sensitivity (dataset) = TP/(TP+FN);
         accuracy (dataset) = (TP+TN)/size(signal_check,1);
-    else 
-        F1(dataset) =NaN; %no TP -> F1=NaN even if the computed annotations are correct
-        sensitivity(dataset) =NaN; %no TP -> sensitivity=NaN even if the computed annotations are correct
-    end
+        
+    
     
     %% Feature Calculation
     %create a new matrix with the filtered PPG in the first column and all 
@@ -196,9 +199,9 @@ for dataset = 1:10
         risetime = peak(i) - begin(i);
     end
     % calculation of the mean features 
-    PWA_mean(dataset) = mean(PWA);
-    PWD_mean(dataset) = mean(PWD);
-    risetime_mean(dataset) = mean(risetime);
+    PWA_m(dataset) = mean(PWA);
+    PWD_m(dataset) = mean(PWD);
+    risetime_m(dataset) = mean(risetime);
     pulserate(dataset) = length(peak)/8; %each signal is 8 minutes long -> count how many systolic peaks per minute on average
     
     %% Final plot
@@ -226,7 +229,14 @@ end
     mean_precision = nanmean(precision)
     mean_specificity = nanmean(specificity)
     mean_sensitivity = nanmean(sensitivity)
-
+    PWA_mean=mean(PWA_m);
+    PWA_std=std(PWA_m);
+    PWD_mean=mean(PWD_m);
+    PWD_std=std(PWD_m);
+    risetime_mean=mean(risetime_m);
+    risetime_std=std(risetime_m);
+    pulserate_m=mean(pulserate);
+    pulserate_std=std(pulserate);
 
 
 
