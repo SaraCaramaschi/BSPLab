@@ -29,8 +29,8 @@ function [cm,result] = evaluation(pos_annotation_reference,annotation_reference,
     %count of not-matched samples between computed and reference annotations
     n1 = length(find(match==0));
     
-    %count of not-matched samples in range equal to reference 
-    %annotations' interval extended by 150 samples on the left and on the right
+    %count of not-matched samples in the 300-samples range centered in each reference 
+    %annotations' interval extreme
     count=0; 
     for i = 1:length(pos_annotation_reference)-1
         for j = pos_annotation_reference(i)-150 : pos_annotation_reference(i)+150
@@ -44,7 +44,7 @@ function [cm,result] = evaluation(pos_annotation_reference,annotation_reference,
     %performance is computed as the maximum (100) minus
     %n1 weighted 1 and n2 weigthed 0.5, then normalized by the total number of
     %annotated samples by the reference classification
-    result = 100 -((n1*100)+(n2*100*0.5)) / length(annotation_reference);
+    result = 1 -((n1)+(n2*0.5)) / length(annotation_reference);
     
     %confusion matrix 
     cm = confusionmat(annotation_reference,annotation_computed);

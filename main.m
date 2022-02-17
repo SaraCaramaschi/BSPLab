@@ -6,14 +6,14 @@ clc
 for dataset = 1:10
    % Loading 
    %training set
-%     load('training_dataset.mat');
-%     PPG = training_dataset{dataset}.signal.pleth.y;
-%     LABELS = training_dataset{dataset}.labels.pleth.artif.x;
-%    
+    load('training_dataset.mat');
+    PPG = training_dataset{dataset}.signal.pleth.y;
+    LABELS = training_dataset{dataset}.labels.pleth.artif.x;
+  
    %test set
-    load('test_dataset.mat');
-    PPG = test_dataset{dataset}.signal.pleth.y;
-    LABELS = test_dataset{dataset}.labels.pleth.artif.x;
+%     load('test_dataset.mat');
+%     PPG = test_dataset{dataset}.signal.pleth.y;
+%     LABELS = test_dataset{dataset}.labels.pleth.artif.x;
     
     %if first annotated portion starts at the beginning of the signal, can't be
     %detected by the algorithm because moving-average threshold can't be
@@ -152,50 +152,55 @@ for dataset = 1:10
     annotation_reference = zeros(size(signal_check(:,1),1),1);
     
     [cm{dataset},performance(dataset)] = evaluation(pos_annotation_reference, annotation_reference, annotation_computed);
+    
+    %metrics calculation starting from confusion matrix
     TN = cm{dataset}(1,1);
-    if size(cm{dataset})~= [1,1] 
+    if size(cm{dataset})~= [1,1] %there are signals where there are no annotations 
+        %accordingly to the absence of artifacts and so only the TN
+        %component is reported in the confusion matrix
         FP = cm{dataset}(1,2);
         FN = cm{dataset}(2,1);
         TP = cm{dataset}(2,2);
-        PRECISION = TP/(TP+FP);
-        RECALL = TP/(TP+FN);
-        F1(dataset) = (PRECISION*RECALL*2)/(PRECISION+RECALL);
-        acc(dataset) = (TP+TN)/size(annotation_computed,1);
-        classification_error(dataset) = (FP+FN)/size(annotation_computed,1);
+        precision (dataset) = TP/(TP+FP);
+        recall = TP/(TP+FN);
+        F1(dataset) = (precision*recall*2)/(precision+recall);
+        specificity (dataset) = TN/(TN+FP);
+        sensitivity (dataset) = TP/(TP+FN);
+        accuracy (dataset) = (TP+TN)/size(signal_check,1);
     else 
         F1(dataset) =NaN; %no TP -> F1=NaN even if the computed annotations are correct
-        FP = 0;
-        FN = 0;
-        TP = 0;
-        acc(dataset) =(TP+TN)/size(annotation_computed,1);
-        classification_error(dataset) = (FP+FN)/size(annotation_computed,1);
-
+        sensitivity(dataset) =NaN; %no TP -> sensitivity=NaN even if the computed annotations are correct
     end
-    %% Metric Calculation
-    %create a new matrix with the filtered PPG in the first column.
-    %the second column have all the annotations and the error. 
+    
+    %% Feature Calculation
+    %create a new matrix with the filtered PPG in the first column and all 
+    %the annotations and errors in the second column
     result=cat(2,signal_check(:,1),zeros(size(signal_check(:,1),1),1));
-    result(find(signal_check(:,4)==10),2)=10; % begin of the pulsewave
-    result(find(signal_check(:,4)==11),2)=11; % peak of the pulsewave
-    result(find(signal_check(:,4)==12),2)=12; % end of the pulewave
-    result(find(signal_check(:,2)==1),2)=1; 
-    result(find(signal_check(:,3)==1),2)=1; 
-    result(find(signal_check(:,4)==1),2)=1; 
-    result(find(signal_check(:,5)==1),2)=1; 
-    begin=find(result(:,2)==10);
-    peak=find(result(:,2)==11);
-    ended=find(result(:,2)==12);
-    %calculation of the metric for all the pulsewave.
-    for i=1:length(begin)
-        PWA=result(peak(i),1)-result(begin(i),1); %Pulse wave amplitude
-        PWD=ended(i)-begin(i);   %Pulse wave duration
-        risetime=peak(i)-begin(i);
+    result(find(signal_check(:,4)==10),2) =10; % begin of the pulsewave
+    result(find(signal_check(:,4)==11),2) =11; % systolic peak of the pulsewave
+    result(find(signal_check(:,4)==12),2) =12; % end of the pulewave
+    %error annotations
+    result(find(signal_check(:,2)==1),2) =1; 
+    result(find(signal_check(:,3)==1),2) =1; 
+    result(find(signal_check(:,4)==1),2) =1; 
+    result(find(signal_check(:,5)==1),2) =1;
+    
+    begin = find(result(:,2)==10);
+    peak = find(result(:,2)==11);
+    ended = find(result(:,2)==12);
+    
+    %calculation of the feature for all the pulsewave
+    for i=1:length(ended)
+        PWA = result(peak(i),1) - result(begin(i),1); %Pulse wave amplitude
+        PWD = ended(i) - begin(i);   %Pulse wave duration
+        risetime = peak(i) - begin(i);
     end
-    % calculation of the mean metric. 
-    PWA_mean(dataset)=mean(PWA);
-    PWD_mean(dataset)=mean(PWD);
-    risetime_mean(dataset)=mean(risetime);
-    pulserate(dataset)=length(peak)/8;
+    % calculation of the mean features 
+    PWA_mean(dataset) = mean(PWA);
+    PWD_mean(dataset) = mean(PWD);
+    risetime_mean(dataset) = mean(risetime);
+    pulserate(dataset) = length(peak)/8; %each signal is 8 minutes long -> count how many systolic peaks per minute on average
+    
     %% Final plot
     figure()
     plot(result(:,1));
@@ -203,7 +208,7 @@ for dataset = 1:10
     title('FINAL PLOT');
     plot(begin, result(begin,1),'g*')
     hold on
-    plot(peak, result(peak,1),'bl*')
+    plot(peak, result(peak,1),'k*')
     hold on
     plot(ended, result(ended,1),'ro')
     hold on
@@ -215,9 +220,14 @@ for dataset = 1:10
 end
 
 %% average performance on train/test set
-mean_performance = mean (performance)
-F1_mean = nanmean(F1)
-mean_acc = nanmean(acc)
-mean_ce = nanmean(classification_error)
-%%
+    mean_performance = mean (performance)
+    mean_F1 = nanmean(F1)
+    mean_accuracy = nanmean(accuracy)
+    mean_precision = nanmean(precision)
+    mean_specificity = nanmean(specificity)
+    mean_sensitivity = nanmean(sensitivity)
+
+
+
+
 
